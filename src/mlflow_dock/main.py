@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import hashlib
 import hmac
@@ -6,8 +7,9 @@ import os
 import time
 
 import docker
+import mlflow
 from dotenv import load_dotenv
-from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Request
+from fastapi import FastAPI, Header, HTTPException, Request
 
 # Load environment variables from .env file
 load_dotenv()
@@ -21,17 +23,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Configuration from environment variables
-WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET")
-if not WEBHOOK_SECRET:
-    raise ValueError("WEBHOOK_SECRET environment variable must be set")
-
+WEBHOOK_SECRET = os.environ["WEBHOOK_SECRET"]
 DOCKER_REGISTRY = os.getenv("DOCKER_REGISTRY", "docker.io")
-DOCKER_USERNAME = os.getenv("DOCKER_USERNAME")
-if not DOCKER_USERNAME:
-    raise ValueError("DOCKER_USERNAME environment variable must be set")
-
-# Maximum allowed age for webhook timestamps (in seconds)
-MAX_TIMESTAMP_AGE = int(os.getenv("MAX_TIMESTAMP_AGE", "300"))  # 5 minutes
+DOCKER_USERNAME = os.environ["DOCKER_USERNAME"]
+MAX_TIMESTAMP_AGE = int(os.getenv("MAX_TIMESTAMP_AGE", "300"))
 
 
 def verify_timestamp_freshness(
@@ -67,7 +62,7 @@ def verify_mlflow_signature(
 
 
 def build_and_push_docker(model_uri: str, model_name: str, version: str):
-    """Background task to build and push Docker image"""
+    """Synchronous function to build and push Docker image"""
     try:
         image_name = f"{DOCKER_REGISTRY}/{DOCKER_USERNAME}/{model_name}:{version}"
 
@@ -99,10 +94,14 @@ def build_and_push_docker(model_uri: str, model_name: str, version: str):
         logger.error(f"Failed to build/push Docker image: {e}")
 
 
+async def build_and_push_docker_async(model_uri: str, model_name: str, version: str):
+    """Async wrapper that runs the blocking build in a thread pool"""
+    await asyncio.to_thread(build_and_push_docker, model_uri, model_name, version)
+
+
 @app.post("/webhook")
 async def handle_webhook(
     request: Request,
-    background_tasks: BackgroundTasks,
     x_mlflow_signature: str = Header(),
     x_mlflow_delivery_id: str = Header(),
     x_mlflow_timestamp: str = Header(),
@@ -159,12 +158,13 @@ async def handle_webhook(
 
         logger.info(f"model_uri = {model_uri}")
 
-        # Queue background task to build and push Docker image
-        background_tasks.add_task(
-            build_and_push_docker,
-            model_uri=model_uri,
-            model_name=model_name,
-            version=version,
+        # Run Docker build in background without blocking the event loop
+        asyncio.create_task(
+            build_and_push_docker_async(
+                model_uri=model_uri,
+                model_name=model_name,
+                version=version,
+            )
         )
         logger.info(f"Queued Docker build and push for {model_name}:{version}")
     elif entity == "model_version_tag" and action == "set":
@@ -184,8 +184,13 @@ async def health():
     return {"status": "healthy"}
 
 
-if __name__ == "__main__":
+def main():
+    """Main entry point for running the FastAPI server"""
     import uvicorn
 
     port = int(os.getenv("PORT", "8000"))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
+
+if __name__ == "__main__":
+    main()

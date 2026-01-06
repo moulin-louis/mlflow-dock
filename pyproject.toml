@@ -19,14 +19,23 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
+    "celery>=5.6.2",
     "docker>=7.1.0",
     "fastapi[standard]>=0.128.0",
-    "mlflow-skinny>=3.8.1",
+    "mlflow>=3.8.1",
     "python-dotenv>=1.0.0",
     "uvicorn>=0.40.0",
 ]
+
+[project.scripts]
+mlflow-dock = "mlflow_dock.main:main"
+create-webhook = "scripts.create_webhook:main"
 
 [project.urls]
 Homepage = "https://github.com/moulin-louis/mlflow-dock"
 Repository = "https://github.com/moulin-louis/mlflow-dock"
 Issues = "https://github.com/moulin-louis/mlflow-dock/issues"
+
+[build-system]
+requires = ["uv_build>=0.9.22,<0.10.0"]
+build-backend = "uv_build"
