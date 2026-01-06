@@ -1,5 +1,5 @@
 [project]
-name = "mlflow-dock"
+name = "mlflow_dock"
 version = "0.1.0"
 description = "MLflow webhook receiver that automatically builds and pushes Docker images when new model versions are created"
 requires-python = ">=3.12"
@@ -28,12 +28,7 @@ dependencies = [
 ]
 
 [project.scripts]
-mlflow-dock = "mlflow_dock.main:main"
-
-[project.urls]
-Homepage = "https://github.com/moulin-louis/mlflow-dock"
-Repository = "https://github.com/moulin-louis/mlflow-dock"
-Issues = "https://github.com/moulin-louis/mlflow-dock/issues"
+mlflow_dock = "mlflow_dock.main:main"
 
 [build-system]
 requires = ["uv_build>=0.9.22,<0.10.0"]

@@ -21,8 +21,8 @@ A FastAPI-based webhook receiver for MLflow that automatically builds and pushes
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/mlflow-dock.git
-cd mlflow-dock
+git clone https://github.com/yourusername/mlflow_dock.git
+cd mlflow_dock
 ```
 
 2. Install dependencies using uv (recommended) or pip:
@@ -61,7 +61,7 @@ AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 # Auto-register webhook (optional)
 MLFLOW_TRACKING_URI=http://localhost:5000
 WEBHOOK_URL=http://localhost:8000/webhook
-WEBHOOK_NAME=mlflow-docker-webhook
+WEBHOOK_NAME=mlflow_dock_webhook
 ```
 
 ## Usage
@@ -86,7 +86,7 @@ from mlflow import MlflowClient
 
 client = MlflowClient("http://your-mlflow-server:5000")
 webhook = client.create_webhook(
-    name="mlflow-docker-webhook",
+    name="mlflow_dock_webhook",
     url="http://your-webhook-server:8000/webhook",
     events=[
         "model_version.created",
