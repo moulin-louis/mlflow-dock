@@ -29,7 +29,6 @@ dependencies = [
 
 [project.scripts]
 mlflow-dock = "mlflow_dock.main:main"
-create-webhook = "scripts.create_webhook:main"
 
 [project.urls]
 Homepage = "https://github.com/moulin-louis/mlflow-dock"
